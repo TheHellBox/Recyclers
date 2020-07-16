@@ -1,0 +1,9 @@
+{
+    "model": "./assets/models/props/wheels/01/wheel_01.gltf",
+    "mass": 20.0,
+    "collider_desc": {
+        "shape": {
+            "ConvexHull": "./assets/models/props/wheels/01/wheel_01.gltf"
+        }
+    }
+}

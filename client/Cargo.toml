@@ -1,0 +1,28 @@
+[package]
+name = "planet_gen"
+version = "0.1.0"
+authors = ["TheHellBox <thehellbox11@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+shared = { path = "../shared" }
+server = { path = "../server" }
+ash = "0.31.0"
+rand = "0.7.3"
+png = "0.16.3"
+slab = "0.4.2"
+gilrs = "0.7.4"
+quinn = "0.6.1"
+hecs = "0.2.12"
+winit = "0.22.2"
+glium = "0.27.0"
+nalgebra = "0.21"
+webpki = "0.21.0"
+futures = "0.3.1"
+renderdoc = "0.9.0"
+futures-util = "0.3.4"
+tokio = { version = "0.2.20", features = ["rt-threaded", "time", "macros", "stream", "sync"] }
+rustls = { version = "0.17.0", features = ["dangerous_configuration"] }
+
+[dependencies.gltf]
+version = "0.15"

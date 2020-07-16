@@ -1,0 +1,11 @@
+[workspace]
+members = ["client", "shared", "server"]
+
+[profile.dev.package.png]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+debug = true

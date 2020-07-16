@@ -1,0 +1,24 @@
+[package]
+name = "server"
+version = "0.1.0"
+authors = ["TheHellBox <thehellbox11@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+shared = { path = "../shared" }
+lru = "0.4.3"
+hecs = "0.2.12"
+rcgen = "0.8.1"
+quinn = "0.6.1"
+slotmap = "0.4.0"
+nalgebra = "0.21"
+futures = "0.3.5"
+nphysics3d = "0.16.0"
+ncollide3d = "0.23.0"
+serde_json = "1.0"
+serde = { version = "1.0.106", features = ["derive"] }
+rand = { version = "0.7.3", features = ["small_rng"] }
+tokio = { version = "0.2.20", features = ["rt-threaded", "time", "macros", "stream", "sync"] }
+
+[dependencies.gltf]
+version = "0.15"

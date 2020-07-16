@@ -1,0 +1,16 @@
+[package]
+name = "shared"
+version = "0.1.0"
+authors = ["TheHellBox <thehellbox11@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rand = "0.7.3"
+slab = "0.4.2"
+simdnoise = { git = "https://github.com/jackmott/rust-simd-noise" }
+quinn = "0.6.1"
+bincode = "1.2.1"
+hecs = "0.2.12"
+simdeez = "1.0.6"
+serde = { version = "1.0.106", features = ["derive"] }
+nalgebra = { version = "0.21", features = ["serde-serialize"] }

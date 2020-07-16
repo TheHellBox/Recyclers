@@ -1,0 +1,104 @@
+use crate::base::components::physics::PhysicsBody;
+use crate::base::player::Player;
+use crate::base::systems::physics::Physics;
+use nphysics3d::object::RigidBody;
+
+use hecs::Entity;
+use rand::rngs::SmallRng;
+use rand::{Rng, SeedableRng};
+use shared::{commands::Component, components::*, EntityId};
+use std::collections::HashMap;
+
+pub struct GameManager {
+    pub world: hecs::World,
+    pub physics: Physics,
+    pub entity_ids: HashMap<EntityId, Entity>,
+    spawns: Vec<Entity>,
+    rng: SmallRng,
+}
+
+impl GameManager {
+    pub fn new() -> Self {
+        GameManager {
+            world: hecs::World::new(),
+            physics: Physics::new(),
+            entity_ids: HashMap::with_capacity(2048),
+            spawns: Vec::with_capacity(256),
+            rng: SmallRng::from_entropy(),
+        }
+    }
+    pub fn step(
+        &mut self,
+    ) -> (
+        Vec<(EntityId, Vec<Component>)>,
+        Vec<(EntityId, na::Isometry3<f64>)>,
+    ) {
+        self.physics.run(&mut self.world);
+        
+        // Process players movement
+        for (_entity, (player, physics_handle)) in
+            &mut self.world.query::<(&Player, &mut PhysicsBody)>()
+        {
+            let player_body = self
+                .physics
+                .bodies
+                .get_mut(physics_handle.handle)
+                .unwrap()
+                .downcast_mut::<RigidBody<f64>>()
+                .unwrap();
+            player.walk(player_body, physics_handle.on_surface);
+        }
+
+        let mut new_spawns = Vec::with_capacity(self.spawns.len());
+        let mut positions = vec![];
+        for entity in self.spawns.drain(..) {
+            let entity_id = *self.world.get::<EntityId>(entity).unwrap();
+            new_spawns.push((entity_id, pull_components(&self.world, entity)));
+        }
+        for (_entity, (&id, &transform)) in &mut self.world.query::<(&EntityId, &Transform)>() {
+            positions.push((id, transform.isometry));
+        }
+        (new_spawns, positions)
+    }
+    pub fn spawn_player(&mut self, info: shared::commands::ClientInfo) -> (EntityId, hecs::Entity) {
+        let id = self.new_id();
+        let player = crate::base::player::spawn(&mut self.world, &mut self.physics, info.name, id);
+        self.spawn(player);
+        (id, player)
+    }
+    pub fn spawn(&mut self, entity: Entity) {
+        self.spawns.push(entity);
+        let id = self.world.get::<EntityId>(entity);
+        if let Ok(id) = id {
+            self.entity_ids.insert(*id, entity);
+        }
+    }
+    pub fn snapshot(&mut self) -> Vec<(EntityId, Vec<Component>)> {
+        let mut entities = vec![];
+        for (entity, &id) in &mut self.world.query::<&EntityId>() {
+            entities.push((id, pull_components(&self.world, entity)));
+        }
+        entities
+    }
+    pub fn new_id(&mut self) -> EntityId {
+        loop {
+            let id = self.rng.gen();
+            if self.entity_ids.contains_key(&id) {
+                continue;
+            }
+            return id;
+        }
+    }
+}
+
+// NOTE: It doesn't looks like the best way to do it. But it'll work for now, we don't have lots of components
+fn pull_components(world: &hecs::World, entity: Entity) -> Vec<Component> {
+    let mut components = Vec::new();
+    if let Ok(x) = world.get::<Transform>(entity) {
+        components.push(Component::Transform((*x).clone()));
+    }
+    if let Ok(x) = world.get::<Drawable>(entity) {
+        components.push(Component::Drawable((*x).clone()));
+    }
+    components
+}

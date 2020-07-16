@@ -1,0 +1,9 @@
+{
+    "model": "./assets/models/props/1x1/1x1.gltf",
+    "mass": 5.0,
+    "collider_desc": {
+        "shape": {
+            "Cuboid": [2.0, 0.04, 2.0]
+        }
+    }
+}

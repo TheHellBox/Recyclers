@@ -1,0 +1,4 @@
+use nphysics3d::object::DefaultBodyHandle;
+
+#[derive(Copy, Clone)]
+pub struct PhysicsBody(pub DefaultBodyHandle);
