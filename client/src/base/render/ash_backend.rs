@@ -18,7 +18,7 @@ pub struct AshBackend {
     pub swapchain_loader: Arc<Swapchain>,
     pub debug_report_loader: DebugReport,
     pub window: winit::window::Window,
-    pub debug_call_back: vk::DebugReportCallbackEXT,
+    pub debug_callback: vk::DebugReportCallbackEXT,
     pub pdevice: vk::PhysicalDevice,
     pub device_memory_properties: vk::PhysicalDeviceMemoryProperties,
     pub queue_family_index: u32,
@@ -194,26 +194,26 @@ impl AshBackend {
                 .unwrap();
             let setup_command_buffer = command_buffers[0];
             let draw_command_buffer = command_buffers[1];
-        }
-        Self {
-            entry,
-            instance,
-            device,
-            queue_family_index,
-            pdevice,
-            device_memory_properties,
-            window,
-            surface_loader,
-            swapchain_loader,
-            present_queue,
-            pool,
-            draw_command_buffer,
-            present_complete_semaphore,
-            rendering_complete_semaphore,
-            surface,
-            surface_format,
-            debug_call_back,
-            debug_report_loader
+            Self {
+                entry,
+                instance,
+                device,
+                queue_family_index,
+                pdevice,
+                device_memory_properties,
+                window,
+                surface_loader,
+                swapchain_loader,
+                present_queue,
+                pool,
+                draw_command_buffer,
+                present_complete_semaphore,
+                rendering_complete_semaphore,
+                surface,
+                surface_format,
+                debug_callback,
+                debug_report_loader
+            }
         }
     }
 }
