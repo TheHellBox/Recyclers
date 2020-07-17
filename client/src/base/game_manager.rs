@@ -1,6 +1,7 @@
 use crate::base::planet::Planet;
 use shared::EntityId;
 use std::collections::HashMap;
+use crate::base::systems::player_controller::PlayerData;
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum InputType {
@@ -30,6 +31,7 @@ impl Input {
 pub struct Character {
     pub entity: hecs::Entity,
     pub camera: hecs::Entity,
+    pub player_data: PlayerData
 }
 
 pub struct GameManager {
@@ -98,6 +100,7 @@ impl GameManager {
             use crate::base::network::ServerCommand::*;
             match command {
                 Tick(tick) => {
+                    self.run_player();
                     for (id, components) in tick.spawns {
                         let mut builder = hecs::EntityBuilder::new();
                         self.spawn(&mut builder, id, components);
@@ -136,7 +139,7 @@ impl GameManager {
             ..Default::default()
         });
         let camera = self.world.spawn(camera.build());
-        self.character = Some(Character { entity, camera });
+        self.character = Some(Character { entity, camera, player_data: PlayerData::default() });
     }
     pub fn spawn(
         &mut self,

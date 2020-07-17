@@ -105,8 +105,6 @@ impl PlanetProcGen {
             cache.push(h);
             result += h;
         }
-
-        // We're using only a half of dynamic range
         result * i16::MAX as f64
     }
 }

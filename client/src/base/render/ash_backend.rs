@@ -3,12 +3,13 @@ use crate::base::render::backend::BackEnd;
 
 use ash::extensions::khr::XlibSurface;
 use ash::extensions::{
-    ext::DebugUtils,
+    ext::DebugReport,
     khr::{Surface, Swapchain},
 };
 use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::{vk, Device, Entry, Instance};
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
+use std::sync::Arc;
 
 pub struct AshBackend {
     pub entry: Entry,
@@ -61,14 +62,14 @@ impl AshBackend {
                 .create_instance(&create_info, None)
                 .expect("Instance creation error");
 
-            let debug_info = vk::DebugUtilsMessengerCreateInfoEXT::builder().message_severity(
-                vk::DebugUtilsMessageSeverityFlagsEXT::ERROR
-                    | vk::DebugUtilsMessageSeverityFlagsEXT::WARNING
-                    | vk::DebugUtilsMessageSeverityFlagsEXT::INFO,
+            let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder().flags(
+                vk::DebugReportFlagsEXT::ERROR
+                    | vk::DebugReportFlagsEXT::WARNING
+                    | vk::DebugReportFlagsEXT::PERFORMANCE_WARNING,
             );
-            let debug_utils_loader = DebugUtils::new(&entry, &instance);
-            let debug_callback = debug_utils_loader
-                .create_debug_utils_messenger(&debug_info, None)
+            let debug_report_loader = DebugReport::new(&entry, &instance);
+            let debug_callback = debug_report_loader
+                .create_debug_report_callback(&debug_info, None)
                 .unwrap();
             let surface = create_surface(&entry, &instance, &window).unwrap();
             let pdevices = instance.enumerate_physical_devices().unwrap();
@@ -115,9 +116,9 @@ impl AshBackend {
                 .queue_create_infos(&queue_info)
                 .enabled_extension_names(&device_extension_names_raw)
                 .enabled_features(&features);
-            let device: Device = instance
+            let device = Arc::new(instance
                 .create_device(pdevice, &device_create_info, None)
-                .unwrap();
+                .unwrap());
             let present_queue = device.get_device_queue(queue_family_index, 0);
             let surface_formats = surface_loader
                 .get_physical_device_surface_formats(pdevice, surface)
@@ -131,11 +132,12 @@ impl AshBackend {
                     },
                     _ => *sfmt,
                 })
+                .nth(0)
                 .expect("Unable to find suitable surface format");
             let surface_capabilities = surface_loader
                 .get_physical_device_surface_capabilities(pdevice, surface)
                 .unwrap();
-            let desired_image_count = surface_capabilities.min_image_count + 1;
+            let mut desired_image_count = surface_capabilities.min_image_count + 1;
             if surface_capabilities.max_image_count > 0
                 && desired_image_count > surface_capabilities.max_image_count
             {
@@ -164,7 +166,7 @@ impl AshBackend {
                 .cloned()
                 .find(|&mode| mode == vk::PresentModeKHR::MAILBOX)
                 .unwrap_or(vk::PresentModeKHR::FIFO);
-            let swapchain_loader = Swapchain::new(&instance, &device);
+            let swapchain_loader = Arc::new(Swapchain::new(&instance, &*device));
             let swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
                 .surface(surface)
                 .min_image_count(desired_image_count)
@@ -178,13 +180,11 @@ impl AshBackend {
                 .present_mode(present_mode)
                 .clipped(true)
                 .image_array_layers(1);
-            let swapchain = swapchain_loader
-                .create_swapchain(&swapchain_create_info, None)
-                .unwrap();
             let pool_create_info = vk::CommandPoolCreateInfo::builder()
                 .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
                 .queue_family_index(queue_family_index);
             let pool = device.create_command_pool(&pool_create_info, None).unwrap();
+            let device_memory_properties = instance.get_physical_device_memory_properties(pdevice);
             let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::builder()
                 .command_buffer_count(2)
                 .command_pool(pool)
@@ -192,8 +192,11 @@ impl AshBackend {
             let command_buffers = device
                 .allocate_command_buffers(&command_buffer_allocate_info)
                 .unwrap();
-            let setup_command_buffer = command_buffers[0];
             let draw_command_buffer = command_buffers[1];
+            let semaphore_create_info = vk::SemaphoreCreateInfo::default();
+            let present_complete_semaphore = device.create_semaphore(&semaphore_create_info, None).unwrap();
+            let rendering_complete_semaphore = device.create_semaphore(&semaphore_create_info, None).unwrap();
+           
             Self {
                 entry,
                 instance,
@@ -227,11 +230,12 @@ pub fn extensions() -> Vec<*const i8> {
     vec![
         Surface::name().as_ptr(),
         XlibSurface::name().as_ptr(),
-        DebugUtils::name().as_ptr(),
+        DebugReport::name().as_ptr(),
+        b"VK_KHR_get_physical_device_properties2\0".as_ptr() as _,
     ]
 }
 
-pub fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
+pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
     instance: &I,
     window: &winit::window::Window,

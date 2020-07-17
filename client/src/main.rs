@@ -17,8 +17,6 @@ fn main() {
     let netclient = base::network::spawn();
     let world = World::new();
 
-    let mut player_controller = systems::PlayerController::default();
-
     let planet_radius = 1275620.0;
 
     let (window_builder, event_loop) = build_glutin_window(1920., 1080., "Silicon Postlive");
@@ -69,10 +67,7 @@ fn main() {
             }
             glutin::event::Event::RedrawRequested(_) => {
                 game_manager.time = start.elapsed().as_secs_f32();
-
                 game_manager.run();
-                // Move player_controller to game_manager
-                player_controller.run(&mut game_manager);
                 glium_backend.render(&mut game_manager);
                 game_manager.window_events.clear();
                 glium_backend.request_redraw();
