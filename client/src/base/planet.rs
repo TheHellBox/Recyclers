@@ -100,6 +100,7 @@ impl Planet {
 
     pub fn trees_at(&self, chunk: &Chunk) -> Vec<(usize, (f32, f32), f32)> {
         use rand::Rng;
+        let origin = self.radius * chunk.origin_on_face().into_inner();
         // That's a nice array right here
         let be_x = chunk.coords.coords.0.to_be_bytes();
         let be_y = chunk.coords.coords.1.to_be_bytes();
@@ -137,9 +138,10 @@ impl Planet {
             0,
             0,
         ];
+        let density = self.procgen.tree_density_at(origin.into());
         let mut rng = rand::rngs::StdRng::from_seed(seed);
         let mut result = vec![];
-        for i in 0..5 {
+        for i in 0..(15.0 * density) as u8 {
             let x: f32 = rng.gen_range(0.0, 1.0);
             let y: f32 = rng.gen_range(0.0, 1.0);
             let angle: f32 = rng.gen_range(-3.14, 3.14);

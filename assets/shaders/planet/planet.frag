@@ -24,6 +24,7 @@ void main() {
 
   vec3 sun = mat3(view) * vec3(0, -1, 0);
   float brightness= clamp(dot(normal, sun), 0.0, 1.0);
+  float angle = dot(base_normal_, normal);
 
   vec4 h = mix(vec4(0.005, 0.005, 0.005, 1), vec4(1, 1, 1, 1), brightness);
 
@@ -40,7 +41,5 @@ void main() {
   vec4 color3 = mix(color3a, color3b, 0.2);
 
   color = mix(color1, color2, clamp((0.01 - height) * 100, 0, 1)) * h;
-  if (height > 0.1) {
-    color = mix(color3, color1, 1 - clamp((height - 0.1) * 7, 0, 1)) * h;
-  }
+  color = mix(color3, color, angle);
 }

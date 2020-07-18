@@ -137,7 +137,7 @@ pub fn spawn(
         RigidBodyDesc::new()
             //.collider(&ColliderDesc::new())
             .mass(40.0)
-            .translation(na::Vector3::new(0.0, 1275620.0 * 1.002, 0.0))
+            .translation(na::Vector3::new(946609.65806255, -747775.7217986964, 414785.79067247955))
             .kinematic_rotations(na::Vector3::new(true, true, true))
             .build(),
         &mut player,

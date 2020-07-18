@@ -195,7 +195,7 @@ impl Planet {
         }
     }
 
-    fn draw_trees<S: glium::Surface + ?Sized>(
+    fn _draw_trees<S: glium::Surface + ?Sized>(
         &self,
         target: &mut S,
         projection: na::Matrix4<f32>,
@@ -208,6 +208,7 @@ impl Planet {
         let view_uni: na::Matrix4<f32> = na::convert(view.to_homogeneous());
         let view_uni: [[f32; 4]; 4] = view_uni.into();
         let projection_uni: [[f32; 4]; 4] = projection.into();
+        let nodes = &models["./assets/models/tree/tree.gltf"].0;
         for chunk in &self.surface_cache.render {
             if chunk.depth < 15 {
                 continue;
@@ -223,7 +224,6 @@ impl Planet {
                     continue;
                 }
             };
-            let nodes = &models["./assets/models/tree/tree.gltf"].0;
             let (origin, worldview) = chunk.transform(self.radius, na::convert(view));
             let origin_p: na::Point3<f32> = origin.into();
             let rotation = na::UnitQuaternion::face_towards(&origin_p.coords, &na::Vector3::z())
@@ -353,7 +353,7 @@ impl Planet {
             camera_transform.isometry.translation.vector,
             view,
         );
-        self.draw_trees(
+        /*self.draw_trees(
             target,
             projection,
             &shaders["TREES"],
@@ -361,6 +361,6 @@ impl Planet {
             models,
             textures,
             display,
-        );
+        );*/
     }
 }

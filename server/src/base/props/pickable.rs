@@ -98,7 +98,7 @@ impl GameManager {
                 &nphysics3d::math::Force::new(
                     player_velocity + vector * 5.0
                         - velocity.normalize() * velocity.norm().min(10.0),
-                    torgue - body.velocity().angular,
+                    torgue * 5.0 - body.velocity().angular,
                 ),
                 nphysics3d::algebra::ForceType::Impulse,
                 true,

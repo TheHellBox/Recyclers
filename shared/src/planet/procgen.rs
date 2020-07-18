@@ -60,6 +60,7 @@ pub enum LayerType {
         frequency: f64,
         depth: f64,
     },
+    Value(f64)
 }
 
 impl LayerType {
@@ -71,6 +72,7 @@ impl LayerType {
                 post,
                 depth,
             } => post(noise.get((point.coords * *frequency).into()), mask) * *depth,
+            LayerType::Value(v) => *v * mask
         }
     }
 }
@@ -106,6 +108,11 @@ impl PlanetProcGen {
             result += h;
         }
         result * i16::MAX as f64
+    }
+    pub fn tree_density_at(&self, point: na::Point3<f64>) -> f64 {
+        let x = self.get(point, 254) / i16::MAX as f64 * 5.0 - 1.5;
+        let x = 1.0 - x.powi(2);
+        x.max(0.0).min(1.0)
     }
 }
 
