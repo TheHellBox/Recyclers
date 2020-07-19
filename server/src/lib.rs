@@ -185,12 +185,12 @@ pub async fn spawn() {
     println!("Server config builded");
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
-    println!("Endpoint listen")
+    println!("Endpoint listen");
     let addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 2454);
     let (_, incoming) = endpoint
         .with_socket(UdpSocket::bind(&addr).unwrap())
         .unwrap();
-    println!("Socket")
+    println!("Socket");
     let mut game = crate::base::game_manager::GameManager::new();
     println!("Game init");
     game.load_props();
