@@ -41,12 +41,15 @@ impl Server {
         let mut incoming = incoming
             .inspect(|_conn| println!("[SERVER] Client is trying to connect to the server"))
             .buffer_unordered(16);
+        println!("incoming");
+
         let (events_tx, events_rx) = mpsc::channel(128);
         let mut events_rx = events_rx.fuse();
         loop {
             select! {
                 _ = ticks.next() => {
                     self.tick().await;
+                    println!("tick");
                 },
                 conn = incoming.select_next_some() => {
                     self.on_connect(conn, events_tx.clone()).await;
@@ -176,25 +179,28 @@ pub fn generate_certificate() -> (CertificateChain, PrivateKey) {
 
 pub async fn spawn() {
     let (certificate_chain, key) = generate_certificate();
+    println!("Certificate Generated");
     let mut server_config = quinn::ServerConfigBuilder::default();
     server_config.certificate(certificate_chain, key).unwrap();
-
+    println!("Server config builded");
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
-
+    println!("Endpoint listen")
     let addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 2454);
     let (_, incoming) = endpoint
         .with_socket(UdpSocket::bind(&addr).unwrap())
         .unwrap();
-
+    println!("Socket")
     let mut game = crate::base::game_manager::GameManager::new();
+    println!("Game init");
     game.load_props();
-
+    println!("Load props");
     let server = Server {
         clients: DenseSlotMap::default(),
         game: game,
         tickrate: 60,
     };
+    println!("Server run");
     server.run(incoming).await;
 }
 
