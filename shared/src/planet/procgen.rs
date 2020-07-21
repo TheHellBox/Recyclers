@@ -60,7 +60,7 @@ pub enum LayerType {
         frequency: f64,
         depth: f64,
     },
-    Value(f64)
+    Value(f64),
 }
 
 impl LayerType {
@@ -72,7 +72,7 @@ impl LayerType {
                 post,
                 depth,
             } => post(noise.get((point.coords * *frequency).into()), mask) * *depth,
-            LayerType::Value(v) => *v * mask
+            LayerType::Value(v) => *v * mask,
         }
     }
 }

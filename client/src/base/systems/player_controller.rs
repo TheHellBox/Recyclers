@@ -26,9 +26,8 @@ impl GameManager {
         let input = &self.input;
         let mut player_data = if let Some(character) = &mut self.character {
             &mut character.player_data
-        }
-        else{
-            return
+        } else {
+            return;
         };
 
         let (mut run, mut jump, mut sit, mut pickup) = (false, false, false, false);
@@ -82,22 +81,16 @@ impl GameManager {
                 player_data.fly = !player_data.fly;
             }
         }
-        if let Some(state) = input
-            .was_pressed(&InputType::KeyboardButton(E))
-        {
+        if let Some(state) = input.was_pressed(&InputType::KeyboardButton(E)) {
             pickup = !state;
         }
 
-        if let Some(state) = input
-            .was_pressed(&InputType::KeyboardButton(Key1))
-        {
+        if let Some(state) = input.was_pressed(&InputType::KeyboardButton(Key1)) {
             if state == &false {
                 prop_spawn = Some(0);
             }
         }
-        if let Some(state) = input
-            .was_pressed(&InputType::KeyboardButton(Key2))
-        {
+        if let Some(state) = input.was_pressed(&InputType::KeyboardButton(Key2)) {
             if state == &false {
                 prop_spawn = Some(1);
             }

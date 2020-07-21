@@ -8,7 +8,7 @@ use ash::extensions::{
 };
 use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::{vk, Device, Entry, Instance};
-use std::ffi::{CString};
+use std::ffi::CString;
 use std::sync::Arc;
 
 pub struct AshBackend {
@@ -29,7 +29,7 @@ pub struct AshBackend {
     pub pool: vk::CommandPool,
     pub draw_command_buffer: vk::CommandBuffer,
     pub present_complete_semaphore: vk::Semaphore,
-    pub rendering_complete_semaphore: vk::Semaphore
+    pub rendering_complete_semaphore: vk::Semaphore,
 }
 
 impl AshBackend {
@@ -116,9 +116,11 @@ impl AshBackend {
                 .queue_create_infos(&queue_info)
                 .enabled_extension_names(&device_extension_names_raw)
                 .enabled_features(&features);
-            let device = Arc::new(instance
-                .create_device(pdevice, &device_create_info, None)
-                .unwrap());
+            let device = Arc::new(
+                instance
+                    .create_device(pdevice, &device_create_info, None)
+                    .unwrap(),
+            );
             let present_queue = device.get_device_queue(queue_family_index, 0);
             let surface_formats = surface_loader
                 .get_physical_device_surface_formats(pdevice, surface)
@@ -194,9 +196,13 @@ impl AshBackend {
                 .unwrap();
             let draw_command_buffer = command_buffers[1];
             let semaphore_create_info = vk::SemaphoreCreateInfo::default();
-            let present_complete_semaphore = device.create_semaphore(&semaphore_create_info, None).unwrap();
-            let rendering_complete_semaphore = device.create_semaphore(&semaphore_create_info, None).unwrap();
-           
+            let present_complete_semaphore = device
+                .create_semaphore(&semaphore_create_info, None)
+                .unwrap();
+            let rendering_complete_semaphore = device
+                .create_semaphore(&semaphore_create_info, None)
+                .unwrap();
+
             Self {
                 entry,
                 instance,
@@ -215,7 +221,7 @@ impl AshBackend {
                 surface,
                 surface_format,
                 debug_callback,
-                debug_report_loader
+                debug_report_loader,
             }
         }
     }

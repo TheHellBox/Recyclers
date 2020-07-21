@@ -1,7 +1,7 @@
 use crate::base::planet::Planet;
+use crate::base::systems::player_controller::PlayerData;
 use shared::EntityId;
 use std::collections::HashMap;
-use crate::base::systems::player_controller::PlayerData;
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum InputType {
@@ -31,7 +31,7 @@ impl Input {
 pub struct Character {
     pub entity: hecs::Entity,
     pub camera: hecs::Entity,
-    pub player_data: PlayerData
+    pub player_data: PlayerData,
 }
 
 pub struct GameManager {
@@ -139,7 +139,11 @@ impl GameManager {
             ..Default::default()
         });
         let camera = self.world.spawn(camera.build());
-        self.character = Some(Character { entity, camera, player_data: PlayerData::default() });
+        self.character = Some(Character {
+            entity,
+            camera,
+            player_data: PlayerData::default(),
+        });
     }
     pub fn spawn(
         &mut self,

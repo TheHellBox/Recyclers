@@ -9,7 +9,7 @@ use quinn::{Certificate, CertificateChain, PrivateKey};
 use shared::commands::ClientCommand;
 use slotmap::new_key_type;
 use slotmap::DenseSlotMap;
-use std::net::{Ipv4Addr, SocketAddr, UdpSocket};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 use tokio::sync::mpsc;
 
 //TODO: I might need some kind of server_println!() macro or smthng
@@ -186,7 +186,7 @@ pub async fn spawn() {
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
     println!("Endpoint listen");
-    let addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 2454);
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2454);
     let (_, incoming) = endpoint
         .with_socket(UdpSocket::bind(&addr).unwrap())
         .unwrap();
