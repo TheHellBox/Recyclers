@@ -1,6 +1,34 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum PostType {
+    Add(f64),
+    Sub(f64),
+    Mul(f64),
+    Div(f64),
+    Pow(i32),
+    Inv,
+    Abs,
+}
+
+impl PostType {
+    fn apply(&self, value: &mut f64) {
+        match self{
+            PostType::Add(v) => *value += v,
+            PostType::Sub(v) => *value -= v,
+            PostType::Mul(v) => *value *= v,
+            PostType::Div(v) => *value /= v,
+            PostType::Pow(v) => *value = value.powi(*v),
+            PostType::Abs => *value = value.abs(),
+            PostType::Inv => *value = 1.0 - *value
+        };
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub enum NoiseType {
-    Simplex,
-    Fbm { lac: f64, gain: f64, octaves: u8 },
+    Simplex(i64),
+    Fbm { lac: f32, gain: f32, octaves: u8, seed: i32 },
 }
 
 impl NoiseType {
@@ -11,54 +39,22 @@ impl NoiseType {
         let y = coords.y;
         let z = coords.z;
 
-        //FIXME: remove that hardcode. Use server seed
-        let seed = 1234;
-
         match self {
-            Self::Simplex => unsafe {
-                // TODO: Finish simd implementation
-                /*if is_x86_feature_detected!("avx2") {
-                    unsafe{
-                        let x = _mm256_set1_ps(x);
-                        let y = _mm256_set1_ps(y);
-                        let z = _mm256_set1_ps(z);
-                        let freq = _mm256_set1_ps(1.0);
-                        let r: simdeez::avx2::F32x8 = simdnoise::avx2::simplex_3d(x, y, z, seed);
-                        r
-                    }
-                }
-                else{
-                    simdnoise::scalar::simplex_3d(x, y, z, seed)
-                }*/
-                simdnoise::scalar::simplex_3d(x as f32, y as f32, z as f32, seed) as f64
+            Self::Simplex(seed) => unsafe {
+                simdnoise::scalar::simplex_3d_f64(x, y, z, *seed) as f64
             },
-            Self::Fbm { lac, gain, octaves } => unsafe {
-                /*if is_x86_feature_detected!("sse4.1") {
-                    let x = _mm_set1_pd(x);
-                    let y = _mm_set1_pd(y);
-                    let z = _mm_set1_pd(z);
-                    let lac = _mm_set1_pd(*lac);
-                    let gain = _mm_set1_pd(*gain);
-
-                    let s = simdeez::sse41::F64x2(simdnoise::sse41::fbm_3d_f64(x, y, z, lac, gain, *octaves, seed as i64));
-                    let mut r: f64 = 0.0;
-                    simdeez::sse41::Sse41::storeu_pd(&mut r, s);
-                    r
-                }
-                else{*/
-                simdnoise::scalar::fbm_3d_f64(x, y, z, *lac, *gain, *octaves, seed as i64)
-                //}
+            Self::Fbm { lac, gain, octaves, seed } => unsafe {
+                simdnoise::scalar::fbm_3d(x as f32, y as f32, z as f32, *lac, *gain, *octaves, *seed) as f64
             },
         }
     }
 }
 
+#[derive(Serialize, Deserialize, Clone)]
 pub enum LayerType {
     Noise {
         noise: NoiseType,
-        post: Box<dyn Fn(f64, f64) -> f64 + Send + Sync>,
         frequency: f64,
-        depth: f64,
     },
     Value(f64),
 }
@@ -69,45 +65,78 @@ impl LayerType {
             LayerType::Noise {
                 noise,
                 frequency,
-                post,
-                depth,
-            } => post(noise.get((point.coords * *frequency).into()), mask) * *depth,
+            } => noise.get((point.coords * *frequency).into()) * mask,
             LayerType::Value(v) => *v * mask,
         }
     }
 }
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Layer {
     pub layer_type: LayerType,
-    pub mask: Option<usize>,
-    pub min_lod: u8,
+    pub mask: Option<Box<Layer>>,
+    pub warp: Option<Box<Layer>>,
+    pub post: Vec<PostType>,
+    pub depth: f64
 }
 
-// Samples collection
+impl Layer {
+    pub fn get(&self, point: na::Point3<f64>) -> f64{
+        let m = {
+            if let Some(mask) = &self.mask {
+                mask.get(point)
+            }
+            else{
+                1.0
+            }
+        };
+        let warp = {
+            if let Some(warp_layer) = &self.warp {
+                warp_layer.get(point)
+            }
+            else{
+                0.0
+            }
+        };
+        let mut h = self.layer_type.get(na::Point3::from(point.coords + na::Vector3::repeat(warp)), m);
+        for op in &self.post{
+            op.apply(&mut h);
+        }
+        h *= self.depth;
+        h
+    }
+}
+
 pub struct PlanetProcGen {
     pub layers: Vec<Layer>,
+    pub file_hash: u64,
+    pub file_path: String
 }
 
 impl PlanetProcGen {
-    pub fn new(layers: Vec<Layer>) -> Self {
-        Self { layers: layers }
-    }
+    // FIXME: depth is oblsolete
     pub fn get(&self, point: na::Point3<f64>, depth: u8) -> f64 {
         let mut result = 0.0;
-        let mut cache = Vec::with_capacity(self.layers.len());
         for layer in &self.layers {
-            if depth < layer.min_lod {
-                continue;
-            }
-            let mut m = 1.0f64;
-            if let Some(mask) = &layer.mask {
-                m = cache[*mask];
-            }
-            let h = layer.layer_type.get(point, m);
-            cache.push(h);
-            result += h;
+            result += layer.get(point);
         }
         result * i16::MAX as f64
+    }
+    pub fn try_reload(&mut self) -> bool {
+        use std::hash::{Hash, Hasher};
+        use std::collections::hash_map::DefaultHasher;
+        use std::io::BufRead;
+        let mut hasher = DefaultHasher::new();
+        let file = std::fs::File::open(&self.file_path).unwrap();
+        let mut reader = std::io::BufReader::new(file);
+        reader.fill_buf().unwrap().hash(&mut hasher);
+        let hash = hasher.finish();
+        if self.file_hash != hash {
+            self.layers = load_layers_from_file(&std::path::Path::new(&self.file_path));
+            self.file_hash = hash;
+            return true;
+        }
+        return false;
     }
     pub fn tree_density_at(&self, point: na::Point3<f64>) -> f64 {
         let x = self.get(point, 254) / i16::MAX as f64 * 5.0 - 1.5;
@@ -119,83 +148,18 @@ impl PlanetProcGen {
 impl Default for PlanetProcGen {
     // Default layers configuration
     fn default() -> Self {
-        let mut layers = Vec::new();
-
-        let _ = layers.push(Layer {
-            layer_type: LayerType::Noise {
-                noise: NoiseType::Fbm {
-                    octaves: 6,
-                    gain: 0.5,
-                    lac: std::f64::consts::PI * 2.0 / 3.0,
-                },
-                frequency: 0.0000005,
-                post: Box::new(|x, _m| x),
-                depth: 3.5,
-            },
-            mask: None,
-            min_lod: 0,
-        });
-        //Mountains
-        let _ = layers.push(Layer {
-            layer_type: LayerType::Noise {
-                noise: NoiseType::Fbm {
-                    octaves: 6,
-                    gain: 0.5,
-                    lac: std::f64::consts::PI * 2.0 / 3.0,
-                },
-                frequency: 0.000001,
-                post: Box::new(|x, m| (1.0 - x.abs() * 100.0).powi(6) * m),
-                depth: 20.0,
-            },
-            mask: Some(0),
-            min_lod: 0,
-        });
-
-        // Rivers
-        let _ = layers.push(Layer {
-            layer_type: LayerType::Noise {
-                noise: NoiseType::Fbm {
-                    octaves: 4,
-                    gain: 0.8,
-                    lac: std::f64::consts::PI * 2.0 / 3.0,
-                },
-                frequency: 0.000002,
-                post: Box::new(|x, _m| (-(1.0 - x.abs() * 100.0).powi(25)).min(0.0)),
-                depth: 0.05,
-            },
-            mask: Some(0),
-            min_lod: 0,
-        });
-
-        let _ = layers.push(Layer {
-            layer_type: LayerType::Noise {
-                noise: NoiseType::Fbm {
-                    octaves: 8,
-                    gain: 0.5,
-                    lac: std::f64::consts::PI * 2.0 / 3.0,
-                },
-                frequency: 0.001,
-                post: Box::new(|x, m| x * m.max(0.0)),
-                depth: 0.2,
-            },
-            mask: None,
-            min_lod: 0,
-        });
-        let _ = layers.push(Layer {
-            layer_type: LayerType::Noise {
-                noise: NoiseType::Fbm {
-                    octaves: 3,
-                    gain: 0.5,
-                    lac: std::f64::consts::PI * 2.0 / 3.0,
-                },
-                frequency: 0.0005,
-                post: Box::new(|x, m| (0.1 - x.max(0.0)).powi(4)),
-                depth: 0.6,
-            },
-            mask: None,
-            min_lod: 0,
-        });
-
-        Self::new(layers)
+        let file_path = std::path::Path::new("./assets/planet.json");
+        let layers = load_layers_from_file(&file_path);
+        Self {
+            layers,
+            file_path: "./assets/planet.json".to_string(),
+            file_hash: 0
+        }
     }
+}
+
+fn load_layers_from_file(path: &std::path::Path) -> Vec<Layer>{
+    let file = std::fs::File::open(path).unwrap();
+    let reader = std::io::BufReader::new(file);
+    serde_json::from_reader(reader).unwrap()
 }

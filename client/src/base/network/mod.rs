@@ -1,5 +1,5 @@
 use futures_util::StreamExt;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 use tokio::sync::mpsc;
 
 #[derive(Debug)]
@@ -40,7 +40,8 @@ async fn connect(
 
     let mut connection = endpoint
         .connect(
-            &SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2454),
+            &"127.0.0.1:1234".parse::<SocketAddr>().unwrap(),
+            //&SocketAddr::new(IpAddr::V4(Ipv4Addr::new(185, 161, 210, 210)), 2454),
             "localhost",
         )
         .unwrap()

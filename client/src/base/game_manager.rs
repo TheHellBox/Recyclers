@@ -101,11 +101,11 @@ impl GameManager {
             match command {
                 Tick(tick) => {
                     self.run_player();
+                    self.netclient.network_sender.send(self.state).unwrap();
                     for (id, components) in tick.spawns {
                         let mut builder = hecs::EntityBuilder::new();
                         self.spawn(&mut builder, id, components);
                     }
-                    self.netclient.network_sender.send(self.state).unwrap();
                     for (id, isometry) in tick.positions {
                         if let Some(entity) = self.entity_ids.get(&id) {
                             if let Ok(mut transform) =

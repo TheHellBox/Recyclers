@@ -37,10 +37,11 @@ impl Planet {
         // We create this thread to prevent render blocking when loading new surface areas
         std::thread::spawn(move || {
             // We cannot move/clone procgen, so we have to recreate it here
-            let procgen = PlanetProcGen::default();
+            let mut procgen = PlanetProcGen::default();
 
             loop {
                 let (chunk, slot) = requests_rx.recv().unwrap();
+                procgen.try_reload();
                 // Capture samples
                 let mut heights: Vec<i16> = Vec::with_capacity(CHUNK_SAMPLES.pow(2) as usize);
                 for dir in chunk.samples(CHUNK_SAMPLES) {

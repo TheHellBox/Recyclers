@@ -1,0 +1,42 @@
+[
+    {
+        "layer_type": {
+            "Noise": {
+                "noise": {
+                    "Fbm": {
+                        "lac": 0.5,
+                        "gain": 0.5,
+                        "octaves": 6,
+                        "seed": 123
+                    }
+                },
+                "frequency": 0.000002
+            }
+        },
+        "post": [],
+        "depth": 1.0
+    },
+    {
+        "layer_type": {
+            "Noise": {
+                "noise": {
+                    "Fbm": {
+                        "lac": 0.5,
+                        "gain": 0.5,
+                        "octaves": 6,
+                        "seed": 124
+                    }
+                },
+                "frequency": 0.000005
+            }
+        },
+        "post": [
+            "Abs",
+            "Inv",
+            {
+                "Pow": 15
+            }
+        ],
+        "depth": 0.0
+    }
+]

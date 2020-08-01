@@ -3,7 +3,7 @@ use crate::base::systems::physics::Physics;
 use nphysics3d::object::{Body, BodyStatus, RigidBody};
 use shared::components::*;
 
-use ncollide3d::shape::{Ball, ShapeHandle};
+use ncollide3d::shape::{Ball, Cuboid, ShapeHandle};
 use nphysics3d::material::{BasicMaterial, MaterialHandle};
 use nphysics3d::object::{
     BodyPartHandle, ColliderDesc, DefaultBodyHandle, DefaultColliderHandle, RigidBodyDesc,
@@ -38,9 +38,7 @@ impl Player {
                 return;
             }
         };
-        let on_surface = handle
-            .collides_with
-            .contains(&(self.ground_sensor, planet_handle));
+        let on_surface = handle.collides_with.len() > 0;
         let body = physics
             .bodies
             .get_mut(handle.handle)
@@ -90,8 +88,8 @@ impl Player {
                 nphysics3d::algebra::ForceType::VelocityChange,
                 true,
             );
-        } else if handle.on_surface {
-            if state.jump && handle.on_surface {
+        } else if handle.on_surface || on_surface {
+            if state.jump {
                 body.apply_force(
                     0,
                     &nphysics3d::math::Force::new(up * 20000.0, na::zero()),
@@ -138,7 +136,7 @@ pub fn spawn(
             //.collider(&ColliderDesc::new())
             .mass(40.0)
             .translation(na::Vector3::new(
-                946609.65806255,
+                996609.65806255,
                 -747775.7217986964,
                 414785.79067247955,
             ))
@@ -152,10 +150,10 @@ pub fn spawn(
             .build(BodyPartHandle(player_body, 0)),
     );
     let ground_sensor_handle = physics.colliders.insert(
-        ColliderDesc::new(ShapeHandle::new(Ball::new(2.0)))
+        ColliderDesc::new(ShapeHandle::new(Cuboid::new(na::Vector3::new(0.75, 0.75, 0.3))))
             .sensor(true)
             .set_position(na::Isometry3::from_parts(
-                na::Translation3::new(0.0, 0.0, 0.0),
+                na::Translation3::new(0.0, 0.0, -1.5),
                 na::UnitQuaternion::identity(),
             ))
             .build(BodyPartHandle(player_body, 0)),

@@ -86,19 +86,20 @@ impl GameManager {
             if vector.norm() > 4.0 {
                 player.picked_object = None;
             }
-            let torgue = player_transform
+            let x = player_transform
                 .isometry
                 .rotation
                 .axis()
                 .unwrap()
-                .normalize()
-                - body.position().rotation.axis().unwrap().normalize();
+                .normalize().cross(&body.position().rotation.axis().unwrap().normalize());
+            let theta = x.norm().asin();
+            let w = x.normalize() * theta;
             body.apply_force(
                 0,
                 &nphysics3d::math::Force::new(
                     player_velocity + vector * 5.0
                         - velocity.normalize() * velocity.norm().min(10.0),
-                    torgue * 5.0 - body.velocity().angular,
+                    w,
                 ),
                 nphysics3d::algebra::ForceType::Impulse,
                 true,

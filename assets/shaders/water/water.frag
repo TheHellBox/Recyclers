@@ -19,11 +19,11 @@ void main() {
   vec3 base_normal_ = normalize(base_normal);
   vec3 camera_dir = normalize(-v_position);
 
-  vec3 sun = mat3(view) * vec3(0, -1, 0);
+  vec3 sun = vec3(0, -1, 0) * mat3(view);
   float b = clamp(dot(base_normal_, sun), 0, 1);
 
-  vec3 half_direction = normalize(normalize(vec3(0, 1, 0)) + camera_dir);
-  float specular = pow(max(dot(mat3(view) * half_direction, normalize(base_normal_)), 0.0), 16.0);
+  vec3 half_direction = normalize(sun + camera_dir);
+  float specular = pow(max(dot(half_direction, base_normal_), 0.0), 16.0);
 
   vec4 h = mix(vec4(0.001, 0.001, 0.001, 1), vec4(1, 1, 1, 1), (b + specular));
   vec4 r = vec4(0.04, 0.15, 0.29, 0.95);

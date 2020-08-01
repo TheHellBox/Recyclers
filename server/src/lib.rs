@@ -180,7 +180,7 @@ pub async fn spawn() {
     server_config.certificate(certificate_chain, key).unwrap();
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2454);
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 1234);
     let (_, incoming) = endpoint
         .with_socket(UdpSocket::bind(&addr).unwrap())
         .unwrap();

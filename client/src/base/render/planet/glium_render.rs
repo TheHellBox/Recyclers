@@ -295,6 +295,10 @@ impl Planet {
         time: f32,
         camera: hecs::Entity,
     ) {
+        if self.procgen.try_reload() {
+            self.surface_cache.clear();
+            //self.surface_cache.chunks.clear();
+        }
         let camera_transform = *world.get::<Transform>(camera).unwrap();
         self.update_cache(camera_transform.isometry.translation.vector);
         self.allocate_chunks();

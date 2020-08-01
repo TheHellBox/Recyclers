@@ -12,5 +12,6 @@ quinn = "0.6.1"
 bincode = "1.2.1"
 hecs = "0.2.12"
 simdeez = "1.0.6"
+serde_json = "1.0"
 serde = { version = "1.0.106", features = ["derive"] }
 nalgebra = { version = "0.21", features = ["serde-serialize"] }

@@ -3,7 +3,7 @@
 use crate::planet::chunk::Chunk;
 use crate::planet::Face;
 
-struct Slot {
+pub struct Slot {
     chunk: Chunk,
     /// Whether the slot is ready for reading
     ready: bool,
@@ -16,7 +16,7 @@ pub struct ChunkInfo {
 }
 
 pub struct Cache {
-    chunks: slab::Slab<Slot>,
+    pub chunks: slab::Slab<Slot>,
     index: std::collections::HashMap<Chunk, u32>,
     pub transfer: Vec<Chunk>,
     pub render: Vec<Chunk>,

@@ -46,10 +46,9 @@ float noise(vec3 p){
 float fbm(vec3 x, int octaves) {
 	float v = 0.0;
 	float a = 0.5;
-	vec3 shift = vec3(100);
 	for (int i = 0; i < octaves; ++i) {
 		v += a * noise(x);
-		x = x * 2.0 + shift;
+		x = x * 2.0;
 		a *= 0.7;
 	}
 	return v;
