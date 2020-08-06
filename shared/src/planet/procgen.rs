@@ -62,7 +62,6 @@ impl NoiseType {
     }
     pub fn get_deriv(&self, coords: na::Vector3<f64>) -> (f64, [f64; 3]) {
         use core::arch::x86_64::_mm256_set1_ps;
-        use simdeez::avx2::*;
         use simdeez::Simd;
         let x = coords.x;
         let y = coords.y;
@@ -78,26 +77,45 @@ impl NoiseType {
                 octaves,
                 seed,
             } => unsafe {
-                let x = _mm256_set1_ps(x as f32);
-                let y = _mm256_set1_ps(y as f32);
-                let z = _mm256_set1_ps(z as f32);
-                let lac = _mm256_set1_ps(*lac);
-                let gain = _mm256_set1_ps(*gain);
-
-                let simd_result = fbm_3d_deriv::<Avx2>(
-                    F32x8(x),
-                    F32x8(y),
-                    F32x8(z),
-                    F32x8(lac),
-                    F32x8(gain),
-                    *seed,
-                    *octaves,
-                );
                 let mut result = (0.0, [0.0, 0.0, 0.0]);
-                Avx2::storeu_ps(&mut result.0, simd_result.0);
-                Avx2::storeu_ps(&mut result.1[0], simd_result.1[0]);
-                Avx2::storeu_ps(&mut result.1[1], simd_result.1[1]);
-                Avx2::storeu_ps(&mut result.1[2], simd_result.1[2]);
+                if is_x86_feature_detected!("avx2") {
+                    use simdeez::avx2::*;
+                    let x = _mm256_set1_ps(x as f32);
+                    let y = _mm256_set1_ps(y as f32);
+                    let z = _mm256_set1_ps(z as f32);
+                    let lac = _mm256_set1_ps(*lac);
+                    let gain = _mm256_set1_ps(*gain);
+
+                    let simd_result = fbm_3d_deriv::<Avx2>(
+                        F32x8(x),
+                        F32x8(y),
+                        F32x8(z),
+                        F32x8(lac),
+                        F32x8(gain),
+                        *seed,
+                        *octaves,
+                    );
+                    Avx2::storeu_ps(&mut result.0, simd_result.0);
+                    Avx2::storeu_ps(&mut result.1[0], simd_result.1[0]);
+                    Avx2::storeu_ps(&mut result.1[1], simd_result.1[1]);
+                    Avx2::storeu_ps(&mut result.1[2], simd_result.1[2]);
+                }
+                else{
+                    use simdeez::scalar::*;
+                    let simd_result = fbm_3d_deriv::<Scalar>(
+                        F32x1(x as f32),
+                        F32x1(y as f32),
+                        F32x1(z as f32),
+                        F32x1(*lac),
+                        F32x1(*gain),
+                        *seed,
+                        *octaves,
+                    );
+                    Scalar::storeu_ps(&mut result.0, simd_result.0);
+                    Scalar::storeu_ps(&mut result.1[0], simd_result.1[0]);
+                    Scalar::storeu_ps(&mut result.1[1], simd_result.1[1]);
+                    Scalar::storeu_ps(&mut result.1[2], simd_result.1[2]);
+                }
                 (
                     result.0 as f64,
                     [result.1[0] as f64, result.1[1] as f64, result.1[2] as f64],
