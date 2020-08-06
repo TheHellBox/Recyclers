@@ -17,14 +17,6 @@ pub fn build_glutin_window(
     let window_builder = winit::window::WindowBuilder::new()
         .with_inner_size(glutin::dpi::LogicalSize::new(x, y))
         .with_title(title);
-
-    // NOTE: Better to build context from backend side
-    /*let context = glutin::ContextBuilder::new()
-    .with_depth_buffer(24)
-    .with_vsync(true)
-    .with_srgb(true);*/
-
     let event_loop = glutin::event_loop::EventLoop::new();
-
     (window_builder, event_loop)
 }
