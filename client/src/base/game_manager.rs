@@ -47,7 +47,8 @@ pub struct GameManager {
     pub server_info: Option<shared::commands::ServerInfo>,
 
     pub time: f32,
-
+    pub since_input_sent: std::time::Duration,
+    pub delta: std::time::Duration,
     pub world: hecs::World,
     pub entity_ids: HashMap<EntityId, hecs::Entity>,
     pub character: Option<Character>,
@@ -95,13 +96,20 @@ impl GameManager {
                 _ => {}
             }
         }
+
+        self.since_input_sent += self.delta;
+        if let Some(overflow) = self
+            .since_input_sent
+            .checked_sub(std::time::Duration::from_secs(1) / 60)
+        {
+            self.run_player();
+            self.netclient.network_sender.send(self.state).unwrap();
+        }
         // Process server ticks
         while let Ok(command) = self.netclient.network_receiver.try_recv() {
             use crate::base::network::ServerCommand::*;
             match command {
                 Tick(tick) => {
-                    self.run_player();
-                    self.netclient.network_sender.send(self.state).unwrap();
                     for (id, components) in tick.spawns {
                         let mut builder = hecs::EntityBuilder::new();
                         self.spawn(&mut builder, id, components);
@@ -122,7 +130,6 @@ impl GameManager {
                 }
             }
         }
-
         shared::components::parent::update_children(&mut self.world);
     }
     pub fn spawn_local_character(&mut self, entity: hecs::Entity) {

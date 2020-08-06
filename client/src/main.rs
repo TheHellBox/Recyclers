@@ -11,7 +11,7 @@ use hecs::World;
 
 fn main() {
     std::thread::spawn(move || {
-        server::run();
+        //server::run();
     });
 
     let netclient = base::network::spawn();
@@ -43,6 +43,8 @@ fn main() {
         world,
         time: 0.0,
         entity_ids: std::collections::HashMap::new(),
+        since_input_sent: std::time::Duration::new(0, 0),
+        delta: std::time::Duration::new(0, 0),
         // TODO: Implement default
         state: shared::commands::ClientCommand {
             movement_direction: na::Vector2::repeat(127),
@@ -60,17 +62,20 @@ fn main() {
 
     let start = std::time::Instant::now();
 
+    glium_backend.render(&mut game_manager);
     event_loop.run(move |event, _, _control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => {
                 game_manager.window_events.push(event.to_static().unwrap());
             }
             glutin::event::Event::RedrawRequested(_) => {
+                let frame_start = std::time::Instant::now();
                 game_manager.time = start.elapsed().as_secs_f32();
                 game_manager.run();
                 glium_backend.render(&mut game_manager);
                 game_manager.window_events.clear();
                 glium_backend.request_redraw();
+                game_manager.delta = frame_start.elapsed();
             }
             _ => {}
         };

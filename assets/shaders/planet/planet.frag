@@ -25,7 +25,7 @@ void main() {
   vec3 sun = mat3(view) * vec3(0, -1, 0);
   float brightness= clamp(dot(normal, sun), 0.0, 1.0);
 
-  float slope = pow((1.0 - dot(normalize(normal), base_normal_)), 6) * 200.0;
+  float slope = clamp(pow((1.0 - dot(normalize(normal), base_normal_)), 6) * 200.0, 0, 1);
   vec4 h = mix(vec4(0.005, 0.005, 0.005, 1), vec4(1, 1, 1, 1), brightness);
 
   vec4 color1a = vec4(texture(tex, vec3(uv_coords / (depth * depth) * 2000, 0) ));
@@ -41,5 +41,5 @@ void main() {
   vec4 color3 = mix(color3a, color3b, 0.2);
 
   color = mix(color1, color2, clamp((0.01 - height) * 100, 0, 1)) * h;
-  color = mix(color, color3, slope);
+  color = mix(color, color3, slope) * h;
 }

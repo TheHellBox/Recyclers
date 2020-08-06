@@ -16,6 +16,7 @@ futures = "0.3.5"
 nphysics3d = "0.16.0"
 ncollide3d = "0.23.0"
 serde_json = "1.0"
+anyhow = "1.0"
 serde = { version = "1.0.106", features = ["derive"] }
 rand = { version = "0.7.3", features = ["small_rng"] }
 tokio = { version = "0.2.20", features = ["rt-threaded", "time", "macros", "stream", "sync"] }

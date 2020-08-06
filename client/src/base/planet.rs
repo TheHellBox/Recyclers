@@ -44,14 +44,17 @@ impl Planet {
                 procgen.try_reload();
                 // Capture samples
                 let mut heights: Vec<i16> = Vec::with_capacity(CHUNK_SAMPLES.pow(2) as usize);
+                let mut normals: Vec<i8> = Vec::with_capacity(CHUNK_SAMPLES.pow(2) as usize * 2);
                 for dir in chunk.samples(CHUNK_SAMPLES) {
                     let p = na::Point::from(dir.into_inner() * radius);
-                    let h = procgen.get(p, chunk.depth) as i16;
-                    heights.push(h);
+                    let noise = procgen.get_deriv(p, chunk.depth);
+                    let normal_unit =
+                        na::Unit::new_normalize(na::Vector3::new(-noise.1[0], -noise.1[1], 1.0));
+                    heights.push(noise.0 as i16);
+                    normals.push((normal_unit.x * 127.0) as i8);
+                    normals.push((normal_unit.y * 127.0) as i8);
                 }
-
-                let mut normals: Vec<i8> = Vec::with_capacity(CHUNK_SAMPLES.pow(2) as usize * 2);
-                for dir in chunk.samples(NORMAL_SAMPLES) {
+                /*for dir in chunk.samples(NORMAL_SAMPLES) {
                     let dir = dir.into_inner();
                     let basis = shared::planet::Face::from_vector(&dir).basis();
                     let perp = basis.matrix().index((.., 1));
@@ -74,7 +77,7 @@ impl Planet {
 
                     normals.push((normal_unit.x * 127.0) as i8);
                     normals.push((normal_unit.y * 127.0) as i8);
-                }
+                }*/
 
                 output_tx.send((chunk, slot, heights, normals)).unwrap();
             }

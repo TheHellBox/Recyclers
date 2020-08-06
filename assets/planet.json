@@ -5,16 +5,16 @@
                 "noise": {
                     "Fbm": {
                         "lac": 0.5,
-                        "gain": 0.5,
+                        "gain": 0.8,
                         "octaves": 6,
                         "seed": 123
                     }
                 },
-                "frequency": 0.000002
+                "frequency": 0.0002
             }
         },
         "post": [],
-        "depth": 1.0
+        "depth": 0.2
     },
     {
         "layer_type": {
@@ -23,7 +23,7 @@
                     "Fbm": {
                         "lac": 0.5,
                         "gain": 0.5,
-                        "octaves": 6,
+                        "octaves": 1,
                         "seed": 124
                     }
                 },

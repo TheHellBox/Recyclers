@@ -91,7 +91,8 @@ impl GameManager {
                 .rotation
                 .axis()
                 .unwrap()
-                .normalize().cross(&body.position().rotation.axis().unwrap().normalize());
+                .normalize()
+                .cross(&body.position().rotation.axis().unwrap().normalize());
             let theta = x.norm().asin();
             let w = x.normalize() * theta;
             body.apply_force(

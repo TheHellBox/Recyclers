@@ -150,13 +150,15 @@ pub fn spawn(
             .build(BodyPartHandle(player_body, 0)),
     );
     let ground_sensor_handle = physics.colliders.insert(
-        ColliderDesc::new(ShapeHandle::new(Cuboid::new(na::Vector3::new(0.75, 0.75, 0.3))))
-            .sensor(true)
-            .set_position(na::Isometry3::from_parts(
-                na::Translation3::new(0.0, 0.0, -1.5),
-                na::UnitQuaternion::identity(),
-            ))
-            .build(BodyPartHandle(player_body, 0)),
+        ColliderDesc::new(ShapeHandle::new(Cuboid::new(na::Vector3::new(
+            0.75, 0.75, 0.3,
+        ))))
+        .sensor(true)
+        .set_position(na::Isometry3::from_parts(
+            na::Translation3::new(0.0, 0.0, -1.5),
+            na::UnitQuaternion::identity(),
+        ))
+        .build(BodyPartHandle(player_body, 0)),
     );
     player.add(Player::new(name, ground_sensor_handle));
 

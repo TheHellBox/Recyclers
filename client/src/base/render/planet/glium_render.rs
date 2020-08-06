@@ -297,7 +297,9 @@ impl Planet {
     ) {
         if self.procgen.try_reload() {
             self.surface_cache.clear();
-            //self.surface_cache.chunks.clear();
+            for k in &mut self.surface_cache.used {
+                *k = false;
+            }
         }
         let camera_transform = *world.get::<Transform>(camera).unwrap();
         self.update_cache(camera_transform.isometry.translation.vector);

@@ -43,14 +43,13 @@ impl GameManager {
         for (_entity, (player, physics_body)) in
             self.world.query::<(&mut Player, &PhysicsBody)>().iter()
         {
-            if player.state.is_none() { continue };
+            if player.state.is_none() {
+                continue;
+            };
             let planet_handle = self.physics.planet_handle.clone();
             player.walk(&mut self.physics, physics_body, planet_handle);
             if let Some(prop) = player.state.unwrap().prop_spawn {
-                props.push((
-                    prop,
-                    physics_body.clone(),
-                ));
+                props.push((prop, physics_body.clone()));
             }
             player.state = None;
         }

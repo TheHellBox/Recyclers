@@ -4,7 +4,8 @@ pub mod base;
 pub mod physics;
 pub mod planet;
 
-use futures::{select, StreamExt};
+use anyhow::Error;
+use futures::{select, StreamExt, TryStreamExt};
 use quinn::{Certificate, CertificateChain, PrivateKey};
 use shared::commands::ClientCommand;
 use slotmap::new_key_type;
@@ -126,16 +127,20 @@ impl Server {
             let mut cmds = conn
                 .uni_streams
                 .map(|stream| async {
-                    shared::network::receive::<shared::commands::ClientCommand>(
-                        &mut stream.unwrap(),
+                    Ok::<_, Error>(
+                        shared::network::receive::<shared::commands::ClientCommand>(
+                            &mut stream.unwrap(),
+                        )
+                        .await
+                        .unwrap(),
                     )
-                    .await
-                    .unwrap()
                 })
                 .buffer_unordered(16);
             loop {
-                let msg = cmds.next().await.unwrap();
-                events_tx.send((id, msg)).await.unwrap();
+                //let msg = cmds.next().await.unwrap();
+                while let Some(msg) = cmds.try_next().await.unwrap() {
+                    events_tx.send((id, msg)).await.unwrap();
+                }
             }
         });
         tokio::spawn(async move {
@@ -165,7 +170,7 @@ impl Server {
 
 pub fn generate_certificate() -> (CertificateChain, PrivateKey) {
     println!("[SERVER] Generating certificate...");
-    let cert = rcgen::generate_simple_self_signed(vec!["localhost".to_string()]).unwrap();
+    let cert = rcgen::generate_simple_self_signed(vec!["recyclers-server".to_string()]).unwrap();
     let key = cert.serialize_private_key_der();
     let cert = cert.serialize_der().unwrap();
     (
@@ -180,7 +185,7 @@ pub async fn spawn() {
     server_config.certificate(certificate_chain, key).unwrap();
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 1234);
+    let addr = SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), 1234);
     let (_, incoming) = endpoint
         .with_socket(UdpSocket::bind(&addr).unwrap())
         .unwrap();

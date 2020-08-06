@@ -16,12 +16,12 @@ pub struct ChunkInfo {
 }
 
 pub struct Cache {
-    pub chunks: slab::Slab<Slot>,
+    chunks: slab::Slab<Slot>,
     index: std::collections::HashMap<Chunk, u32>,
     pub transfer: Vec<Chunk>,
     pub render: Vec<Chunk>,
     max_depth: u8,
-    used: Vec<bool>,
+    pub used: Vec<bool>,
     pub capacity: usize,
 }
 
