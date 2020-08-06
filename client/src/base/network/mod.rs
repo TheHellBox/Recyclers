@@ -36,7 +36,7 @@ async fn connect(
         .dangerous()
         .set_certificate_verifier(std::sync::Arc::new(AcceptAnyCertificate));
     endpoint.default_client_config(client_cfg);
-    let (endpoint, _) = endpoint.bind(&"[::]:0".parse().unwrap()).unwrap();
+    let (endpoint, _) = endpoint.bind(&"127.0.0.1:0".parse().unwrap()).unwrap();
 
     let mut connection = endpoint
         .connect(
