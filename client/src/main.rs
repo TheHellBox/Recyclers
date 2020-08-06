@@ -68,13 +68,13 @@ fn main() {
             glutin::event::Event::WindowEvent { event, .. } => {
                 game_manager.window_events.push(event.to_static().unwrap());
             }
-            glutin::event::Event::RedrawRequested(_) => {
+            glutin::event::Event::RedrawEventsCleared => {
                 let frame_start = std::time::Instant::now();
                 game_manager.time = start.elapsed().as_secs_f32();
                 game_manager.run();
                 glium_backend.render(&mut game_manager);
                 game_manager.window_events.clear();
-                glium_backend.request_redraw();
+                //glium_backend.request_redraw();
                 game_manager.delta = frame_start.elapsed();
             }
             _ => {}
